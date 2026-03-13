@@ -1,0 +1,329 @@
+{
+  "name": "messenger-workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "facebook-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -512,
+        -96
+      ],
+      "id": "8970f3ff-4f5b-4341-a57c-d082fe932c22",
+      "name": "Webhook",
+      "webhookId": "eaa964f2-d372-4132-9850-5de5ed7bf855"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ff32d887-c193-4843-a696-c9b207d00050",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "0fdb5d4b-8583-4f88-912f-916b5b13154b",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "rightValue": "shuvochakma",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -176,
+        -144
+      ],
+      "id": "4d3e5a1c-a98d-4299-b3e7-09548d97393c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        48,
+        -224
+      ],
+      "id": "12073314-7cb7-4421-bc73-0212681ae5bc",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "=You are a helpful assistant connected to a Google Sheet that contains a list of services. The sheet includes the columns Service Name, Description, Price, and Contact.\nsimple greeting conversation\nif user say hi then reply the user simple greeting\n\nYour job is to answer user questions about services using the information from the Google Sheet.\n\nGeneral behavior:\nRespond in a friendly and natural tone like a real person helping a customer.\n\nLanguage rule:\nIf the user writes in Banglish, respond in pure Bangla.\n\nService explanation rule:\nIf the user asks about a specific service, explain the service in one single paragraph including the description, price, and contact information. Do not use bullet points, symbols, or line breaks. Only use normal sentences separated by spaces.\n\nMultiple services:\nIf the user asks about multiple services, summarize them naturally in one paragraph.\n\nService not found:\nIf the requested service is not found in the sheet, politely say that the service is not currently available and offer help with other services.\n\nService list request:\nIf the user asks for the list of services (for example: tell me your services, what services do you provide, services list), respond only with the service names using a numbered list.\n\nExample format:\n\nOur Services:\n1 Logo Design\n2 Social Media Post Design\n3 Banner Cover Design\n4 Business Card Design\n5 YouTube Thumbnail Design\n6 AI Chatbot Setup\n7 Facebook Page Automation\n8 n8n Workflow Automation\n9 AI Content Automation\n10 Landing Page Design\n11 Website UI Design\n12 Automation Consultation"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -96,
+        16
+      ],
+      "id": "93bf5038-d420-44f4-b2d8-c942ff6b5339",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        240
+      ],
+      "id": "2b5cdd8a-18ca-4e94-9825-9e48d145a94c",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "b32AEeH6vTRHjyEF",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sender_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        256
+      ],
+      "id": "2e92fb78-62b4-42df-9552-2fb5f997c1ac",
+      "name": "Simple Memory",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $('Edit Fields').item.json.recipient_id }}/messages",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAF9nQCNvMAgBQZBoeoPTBs88uRyrMsJtJDqW76UZA6l0ylNrxWKL7Uixo7dridkjeTzwOUBcIKQQBf6fcvTLHfS6c3p80hCfhXhsJcvZAGADYixKhkWoiPZAbIadxMTqmD99t6tN8ZBr66RuXGJtPuaHkCIfCG3qV4mvUr5s15FPQZBKAxTDluY6mFxxXjSp3YvaVE2hZAH6AZDZD"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Edit Fields').item.json.sender_id }}\"\n  },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"text\": {{ JSON.stringify($json.output) }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        32
+      ],
+      "id": "3056f508-1a76-4eab-87fa-9ebfcaa0825d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1wFZCrkUGKGSJYaD5PYEA7GjL5KDhPTBktqR80tFZ1kE",
+          "mode": "list",
+          "cachedResultName": "google sheet for messenger automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wFZCrkUGKGSJYaD5PYEA7GjL5KDhPTBktqR80tFZ1kE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "page service sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1wFZCrkUGKGSJYaD5PYEA7GjL5KDhPTBktqR80tFZ1kE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        112,
+        256
+      ],
+      "id": "bb849522-f514-46c1-b6a1-4c852bbb6ebe",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QAh0SXQenWbK7mUt",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4f20b405-7124-42eb-8f0d-3336c9830de7",
+              "name": "sender_id",
+              "value": "={{ $json.body.entry[0].messaging[0].sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "fc4fe788-7777-49f1-b806-05da4d60edf5",
+              "name": "recipient_id",
+              "value": "={{ $json.body.entry[0].messaging[0].recipient.id }}",
+              "type": "string"
+            },
+            {
+              "id": "7fd3f36a-57a2-4889-b3e1-6dc7c8fc39ef",
+              "name": "message",
+              "value": "={{ $json.body.entry[0].messaging[0].message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        0
+      ],
+      "id": "213ffe67-be45-482e-9cdb-b678a2d87d68",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ad297d36-1b4c-4f33-86b0-7ab4a2f3cfcf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "461baec86eb00c726a656c729ba2741ac06c4c1f3e5633467fbc8acfc21aa9c3"
+  },
+  "id": "kAaY9FYZ19dAXlur",
+  "tags": []
+}
